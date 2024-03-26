@@ -1,0 +1,68 @@
+name: Test Operator
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+  security-events: write
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-22.04
+    steps:
+
+      - name: Checkout Code
+        # https://github.com/actions/checkout/releases
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+
+      ##########################################################################
+
+      # https://github.com/Azure/login/tags
+      - name: Login to Azure
+        uses: azure/login@8c334a195cbb38e46038007b304988d888bf676a # v2.0.0
+        with:
+          client-id: "${{ vars.AZURE_CLIENT_ID }}"
+          tenant-id: "${{ vars.AZURE_TENANT_ID }}"
+          subscription-id: "${{ vars.AZURE_SUBSCRIPTION_ID }}"
+
+      - name: Install kubelogin
+        # https://github.com/Azure/use-kubelogin/tags
+        uses: azure/use-kubelogin@76597ae0fcbaace21b05e13a2cbf8daee2c6e820 # v1.2
+        with:
+          # https://github.com/Azure/kubelogin/releases
+          kubelogin-version: 'v0.1.1'
+
+      - name: Set AKS Context
+        # https://github.com/Azure/aks-set-context/tags
+        uses: azure/aks-set-context@37037e33d3a2fc08abe40c887d81c3f6e1eb93b9 # v4.0.0
+        with:
+          resource-group: "${{ vars.AZURE_RESOURCE_GROUP_NAME }}"
+          cluster-name: dev9fa1
+          admin: 'false'
+          use-kubelogin: 'true'
+
+      ##########################################################################
+
+      - name: Install vCluster CLI
+        # https://github.com/loft-sh/setup-vcluster/tags
+        uses: loft-sh/setup-vcluster@446bb6ad2bbf25d3fde666db01685c410f579a0d # v0.0.1
+        with:
+          # https://github.com/loft-sh/vcluster/releases
+          version: v0.19.5
+          kubectl-install: false
+
+      - name: Show vCluster Version
+        run: vcluster --version
+
+      # - name: Create vCluster
+      #   run: vcluster create test
+
+      # - name: Disconnect vCluster
+      #   run: vcluster disconnect
+
+      # - name: Delete vCluster
+      #   run: vcluster delete test
